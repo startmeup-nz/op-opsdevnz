@@ -1,0 +1,2 @@
+[console_scripts]
+op-opsdevnz = opsdevnz.__main__:main

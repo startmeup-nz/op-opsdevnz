@@ -1,0 +1,10 @@
+python-dotenv>=1.0.0
+requests>=2.32.4
+
+[:python_version >= "3.9"]
+onepassword-sdk>=0.3.1
+
+[dev]
+pytest>=8.4.0
+ruff>=0.6.0
+mypy>=1.12.0
