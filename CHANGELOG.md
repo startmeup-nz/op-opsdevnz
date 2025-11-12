@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2025-11-12
+### Changed
+- README feature list now explicitly references `resolve_secret()` so the
+  CLI equivalence statement is unambiguous.
+
 ## [0.1.2] - 2025-11-12
 ### Changed
 - README intro now clarifies the package scope, CLI requirements, and broader
