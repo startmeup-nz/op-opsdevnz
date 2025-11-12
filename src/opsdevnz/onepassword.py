@@ -9,17 +9,29 @@ without additional tooling.
 import os
 import shutil
 import subprocess
-from typing import Optional
+from dataclasses import dataclass
+from typing import Literal, Optional
 
 try:
     # Official SDK (requires OP_SERVICE_ACCOUNT_TOKEN)
-    from onepassword import OnePassword  # type: ignore
+    from onepassword import OnePassword
 except Exception:  # pragma: no cover
-    OnePassword = None  # type: ignore[misc,assignment]
+    OnePassword = None
 
 
 class SecretError(RuntimeError):
     """Raised when secret resolution fails."""
+
+
+SecretSource = Literal["env", "sdk", "cli"]
+
+
+@dataclass
+class SecretResolution:
+    """Result of resolving a secret, including which resolver was used."""
+
+    value: str
+    source: SecretSource
 
 
 def _resolve_via_sdk(secret_ref: str) -> str:
@@ -55,15 +67,15 @@ def _resolve_via_cli(secret_ref: str, timeout: float = 10.0) -> str:
         raise SecretError("Timed out calling 'op read'") from exc
 
 
-def get_secret(
+def resolve_secret(
     *,
     secret_ref_env: Optional[str] = None,
     secret_ref: Optional[str] = None,
     env_override: Optional[str] = None,
     prefer_cli: bool = False,
     timeout: float = 10.0,
-) -> str:
-    """Resolve a 1Password secret.
+) -> SecretResolution:
+    """Resolve a 1Password secret and report which resolver produced it.
 
     Resolution order:
         1. Return ``env_override`` when set (local overrides, CI tests).
@@ -74,28 +86,49 @@ def get_secret(
     """
 
     if env_override and (value := os.getenv(env_override)):
-        return value
+        return SecretResolution(value=value, source="env")
 
     reference = secret_ref or (os.getenv(secret_ref_env) if secret_ref_env else None)
     if not reference or not reference.startswith("op://"):
         raise SecretError("A valid 1Password secret reference is required (op://Vault/Item/Field)")
 
     if prefer_cli:
-        cli_error: Optional[SecretError] = None
         try:
-            return _resolve_via_cli(reference, timeout=timeout)
-        except SecretError as exc:
-            cli_error = exc
+            value = _resolve_via_cli(reference, timeout=timeout)
+            return SecretResolution(value=value, source="cli")
+        except SecretError as cli_error:
             # fall back to SDK when available so CI/service-account flows still work
             try:
-                return _resolve_via_sdk(reference)
+                value = _resolve_via_sdk(reference)
+                return SecretResolution(value=value, source="sdk")
             except SecretError:
                 # raise original CLI error to preserve context for local devs
-                raise cli_error
+                raise cli_error from None
 
     try:
-        return _resolve_via_sdk(reference)
+        value = _resolve_via_sdk(reference)
+        return SecretResolution(value=value, source="sdk")
     except SecretError:
         if shutil.which("op"):
-            return _resolve_via_cli(reference, timeout=timeout)
+            value = _resolve_via_cli(reference, timeout=timeout)
+            return SecretResolution(value=value, source="cli")
         raise
+
+
+def get_secret(
+    *,
+    secret_ref_env: Optional[str] = None,
+    secret_ref: Optional[str] = None,
+    env_override: Optional[str] = None,
+    prefer_cli: bool = False,
+    timeout: float = 10.0,
+) -> str:
+    """Backward-compatible helper that returns only the secret value."""
+
+    return resolve_secret(
+        secret_ref_env=secret_ref_env,
+        secret_ref=secret_ref,
+        env_override=env_override,
+        prefer_cli=prefer_cli,
+        timeout=timeout,
+    ).value
