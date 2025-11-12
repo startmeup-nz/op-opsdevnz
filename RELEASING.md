@@ -39,15 +39,21 @@ This repository publishes to TestPyPI first, then PyPI once smoke tests pass.
      pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple op-opsdevnz==<new-version>
      ```
 
-6. **Tag + Push**
+6. **Publish to PyPI**
+   - After the TestPyPI install check passes, upload the same artifacts to PyPI:
+     ```
+     python -m twine upload --repository pypi dist/*
+     ```
+   - Smoke-test the PyPI build with
+     ```
+     pip install op-opsdevnz==<new-version>
+     ```
+
+7. **Tag + Push**
    ```
    git tag v<new-version>
    git push origin main v<new-version>
    ```
-
-7. **PyPI (optional for now)**
-
-   - Repeat step 5 with `--repository pypi` once TestPyPI validation passes.
 
 ## CI/CD
 
