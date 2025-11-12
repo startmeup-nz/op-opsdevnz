@@ -2,9 +2,7 @@
 
 [![CI](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml/badge.svg)](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml)
 
-Utilities for resolving 1Password secrets in both CI (service accounts) and on
-developer workstations (CLI fallback). Packaged for reuse by the StartMeUp.nz
-platform team and downstream OctoDNS providers.
+Python package for resolving 1Password `op://` secrets across CI service accounts and developer workstations, plus a CLI fallback that depends on the authenticated 1Password CLI binary. Keeps OctoDNS and other automation workflows secret-free. Packaged for reuse by OpsDev.nz, a platform engineering collective sponsored by StartMeUp.nz.
 
 ## Features
 

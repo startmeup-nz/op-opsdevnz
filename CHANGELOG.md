@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.1.1] - 2025-11-12
+## [0.1.2] - 2025-11-12
+### Changed
+- README intro now clarifies the package scope, CLI requirements, and broader
+  automation audiences.
+- RELEASING checklist updated with mandatory changelog entries, `twine check`,
+  and pinned TestPyPI install steps for doc-only releases.
+
+## [0.1.1-2] - 2025-11-12
 ### Added
 - Introduced `resolve_secret()` to return both the secret value and the resolver
   source (`env`, `sdk`, or `cli`). `get_secret()` now wraps this helper for
