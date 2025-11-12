@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2025-11-12
+### Added
+- First production PyPI release, enabling downstream repos to depend on
+  `op-opsdevnz` without editable installs.
+
+### Changed
+- Installation docs now highlight the PyPI workflow plus the GitHub fallback.
+- Releasing guide documents the TestPyPI → PyPI upload sequence.
+- Internal consumers swept so requirements/docs reference the published wheel.
+
 ## [0.1.3] - 2025-11-12
 ### Changed
 - README feature list now explicitly references `resolve_secret()` so the
