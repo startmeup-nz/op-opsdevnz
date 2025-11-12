@@ -12,12 +12,13 @@ Python package for resolving 1Password `op://` secrets across CI service account
   resolver was used.
 - Environment override helpers for CI sandboxes/tests.
 - OctoDNS hook (`opsdevnz.octodns_hooks.resolve`) for the Metaname provider.
-- Small CLI (`op-opsdevnz resolve …`) that mirrors the Python helper behaviour.
+- Small CLI (`op-opsdevnz resolve …`) that mirrors the `resolve_secret()`
+  helper so shell scripts match the Python API semantics.
 
 ## Installation
 
 ```bash
-# editable install while developing inside outcome-engineering
+# editable install while developing locally
 pip install -e modules/op_opsdevnz
 
 # or directly from GitHub until we publish to PyPI/TestPyPI
