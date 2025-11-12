@@ -1,37 +1,86 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "op-opsdevnz"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpsDev.nz helpers for resolving 1Password secrets with Service Account + CLI fallback."
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
-authors = [{name = "OpsDev.nz"}]
+license = {file = "LICENSE"}
+authors = [
+    {name = "OpsDev.nz Platform Engineering", email = "opsdev@opsdev.nz"},
+]
+maintainers = [
+    {name = "StartMeUp.nz Platform Engineering", email = "platform@startmeup.nz"},
+]
+keywords = ["1password", "secrets", "octodns", "opsdevnz"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+]
 dependencies = [
-    "onepassword-sdk>=0.3.1; python_version>='3.9'",
+    "onepassword-sdk>=0.3.1",
     "python-dotenv>=1.0.0",
-    "requests>=2.32.4",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.4.0",
-    "ruff>=0.6.0",
+    "build>=1.2.2",
     "mypy>=1.12.0",
+    "pytest>=8.3.0",
+    "pytest-cov>=5.0.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.6.5",
+    "twine>=5.1.1",
+]
+test = [
+    "pytest>=8.3.0",
+    "pytest-mock>=3.14.0",
 ]
 
 [project.scripts]
 op-opsdevnz = "opsdevnz.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/startmeup-nz/op-opsdevnz"
+Source = "https://github.com/startmeup-nz/op-opsdevnz"
+Issues = "https://github.com/startmeup-nz/op-opsdevnz/issues"
 
 [tool.ruff]
 line-length = 100
 target-version = "py39"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "F", "I", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/opsdevnz/__init__.py" = ["F401"]
+"src/op_opsdevnz/__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.9"
+strict_optional = true
+namespace_packages = true
+warn_unreachable = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "--color=yes --durations=10"
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

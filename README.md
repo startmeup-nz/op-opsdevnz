@@ -1,36 +1,48 @@
 # op-opsdevnz
 
-Helpers to resolve 1Password secrets in both local development and CI.
+[![CI](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml/badge.svg)](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml)
+
+Utilities for resolving 1Password secrets in both CI (service accounts) and on
+developer workstations (CLI fallback). Packaged for reuse by the StartMeUp.nz
+platform team and downstream OctoDNS providers.
 
 ## Features
 
-- Resolve `op://` references using the 1Password Service Account SDK with CLI
-  fallback (for local interactive sessions).
-- Optional environment overrides so developers can inject test values without
-  rewriting config.
-- OctoDNS integration helper (`opsdevnz.octodns_hooks.resolve`) for use with the
-  Metaname provider.
+- Resolve `op://` references via the official Service Account SDK with optional
+  CLI fallback for local workflows.
+- Rich error handling plus an API that can return the secret value *and* which
+  resolver was used.
+- Environment override helpers for CI sandboxes/tests.
+- OctoDNS hook (`opsdevnz.octodns_hooks.resolve`) for the Metaname provider.
 - Small CLI (`op-opsdevnz resolve …`) that mirrors the Python helper behaviour.
 
 ## Installation
 
 ```bash
+# editable install while developing inside outcome-engineering
 pip install -e modules/op_opsdevnz
+
+# or directly from GitHub until we publish to PyPI/TestPyPI
+pip install git+https://github.com/startmeup-nz/op-opsdevnz.git
 ```
 
 ## Usage
 
 ```python
-from opsdevnz.onepassword import get_secret
+from opsdevnz.onepassword import resolve_secret
 
-token = get_secret(secret_ref_env="METANAME_API_TOKEN_REF", env_override="METANAME_API_TOKEN")
+result = resolve_secret(
+    secret_ref_env="METANAME_API_TOKEN_REF",
+    env_override="METANAME_API_TOKEN",
+)
+print(result.value, result.source)  # -> ('***', 'sdk' | 'cli' | 'env')
 ```
 
 CLI equivalent:
 
 ```bash
-op-opsdevnz resolve --ref "op://Vault/Item/Field"
-op-opsdevnz resolve --ref-env METANAME_API_TOKEN_REF --show-source
+op-opsdevnz resolve --ref "op://Vault/Item/Field" --show-source
+op-opsdevnz resolve --ref-env METANAME_API_TOKEN_REF --env-override METANAME_API_TOKEN
 ```
 
 ### OctoDNS Hook
@@ -47,9 +59,11 @@ export OCTODNS_METANAME_SECRET_RESOLVER="op_opsdevnz.octodns_hooks:resolve"
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e .[dev]
-ruff check src tests
-pytest
+make check
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and
+[RELEASING.md](RELEASING.md) for publishing instructions.
 
 ## License
 

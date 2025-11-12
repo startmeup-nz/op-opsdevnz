@@ -2,16 +2,25 @@
 
 import asyncio
 import os
+from importlib import metadata as importlib_metadata
+from typing import Optional
 
 from onepassword.client import Client
 
 from .onepassword import SecretError
 
 
+def _package_version() -> str:
+    try:
+        return importlib_metadata.version("op-opsdevnz")
+    except importlib_metadata.PackageNotFoundError:
+        return "0.0.0+dev"
+
+
 def _integration_meta() -> dict[str, str]:
     return {
         "integration_name": "OpsDev.nz",
-        "integration_version": "0.1.0",
+        "integration_version": _package_version(),
     }
 
 
@@ -30,7 +39,7 @@ async def _resolve_ref_async(secret_ref: str) -> str:
     return value
 
 
-def get_secret_from_ref_env(ref_env: str, *, env_override: str | None = None) -> str:
+def get_secret_from_ref_env(ref_env: str, *, env_override: Optional[str] = None) -> str:
     """Synchronously resolve a secret reference stored in an env var."""
 
     if env_override and (value := os.getenv(env_override)):

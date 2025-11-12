@@ -8,8 +8,9 @@ Implements the `op-opsdevnz` CLI for resolving 1Password secrets.
 import argparse
 import sys
 from importlib import metadata
+from typing import List, Optional
 
-from .onepassword import SecretError, get_secret
+from .onepassword import SecretError, resolve_secret
 
 
 def _mask(value: str) -> str:
@@ -24,7 +25,7 @@ def _mask(value: str) -> str:
     return f"{text[:4]}…{text[-4:]}"
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     """Entry point for the `op-opsdevnz` CLI."""
 
     try:
@@ -82,16 +83,17 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "resolve":
         try:
-            result = get_secret(
+            resolution = resolve_secret(
                 secret_ref_env=args.ref_env if args.ref_env else None,
                 secret_ref=args.ref if args.ref else None,
                 env_override=args.env_override,
                 prefer_cli=args.prefer_cli,
                 timeout=args.timeout,
             )
-            print(result if args.no_mask else _mask(result))
+            value = resolution.value
+            print(value if args.no_mask else _mask(value))
             if args.show_source:
-                print("[source] unknown", file=sys.stderr)
+                print(f"[source] {resolution.source}", file=sys.stderr)
             return 0
         except SecretError as exc:
             print(f"Error: {exc}", file=sys.stderr)
