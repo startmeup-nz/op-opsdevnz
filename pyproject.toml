@@ -11,10 +11,10 @@ requires-python = ">=3.9"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
-    {name = "OpsDev.nz Platform Engineering", email = "opsdev@opsdev.nz"},
+    {name = "OpsDev.nz Platform Engineering", email = "john@opsdev.nz"},
 ]
 maintainers = [
-    {name = "StartMeUp.nz Platform Engineering", email = "platform@startmeup.nz"},
+    {name = "OpsDev.nz Platform Engineering", email = "john@opsdev.nz"},
 ]
 keywords = ["1password", "secrets", "octodns", "opsdevnz"]
 classifiers = [
