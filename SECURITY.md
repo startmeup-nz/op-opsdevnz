@@ -2,8 +2,10 @@
 
 We take the safety of automation workloads seriously. If you discover a
 vulnerability in `op-opsdevnz`, please email
-[`security@opsdev.nz`](mailto:security@opsdev.nz) with the details. Public
-issues or pull requests should be avoided until we have a fix ready.
+[john@opsdev.nz](mailto:john@opsdev.nz). When possible, encrypt the report
+using the GPG key published on [pgp.net.nz](https://pgp.net.nz/) for that
+address. Public issues or pull requests should be avoided until we have a fix
+ready.
 
 When reporting:
 
