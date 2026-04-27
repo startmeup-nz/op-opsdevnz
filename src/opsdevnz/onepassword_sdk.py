@@ -1,5 +1,7 @@
 """Async helpers for resolving 1Password secrets via the official SDK."""
 
+from __future__ import annotations
+
 import asyncio
 import os
 from importlib import metadata as importlib_metadata

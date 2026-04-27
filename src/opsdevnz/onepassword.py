@@ -6,6 +6,8 @@ fallback to the `op` CLI so local developers can resolve `op://` references
 without additional tooling.
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess

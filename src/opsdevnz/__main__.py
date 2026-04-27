@@ -5,6 +5,8 @@ opsdevnz.__main__
 Implements the `op-opsdevnz` CLI for resolving 1Password secrets.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
 from importlib import metadata

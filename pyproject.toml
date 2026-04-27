@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: System :: Systems Administration",
@@ -62,6 +63,10 @@ Issues = "https://github.com/startmeup-nz/op-opsdevnz/issues"
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+
+# Ruff will flag deprecated typing usage (typing.Dict, etc.) from Python 3.9+
+# but we keep target-version at py39 for broad compatibility.
+# Individual modules can be modernized when dropping 3.9 support.
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]

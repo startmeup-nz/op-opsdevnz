@@ -59,9 +59,15 @@ export OCTODNS_METANAME_SECRET_RESOLVER="op_opsdevnz.octodns_hooks:resolve"
 ## Development
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e .[dev]
-make check
+uv sync --extra dev
+uv run python -m pytest tests/ -v
+```
+
+To run linting and type checks:
+
+```bash
+uv run ruff check src tests
+uv run mypy src
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and

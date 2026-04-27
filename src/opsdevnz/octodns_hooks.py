@@ -1,5 +1,7 @@
 """Integration helpers between OctoDNS Metaname provider and opsdevnz secrets."""
 
+from __future__ import annotations
+
 from typing import Optional
 
 from .onepassword import get_secret as opsdevnz_get_secret
