@@ -19,7 +19,7 @@ Python package for resolving 1Password `op://` secrets across CI service account
 
 ```bash
 # editable install while developing locally
-pip install -e modules/op_opsdevnz
+pip install -e .
 
 # latest release from PyPI
 pip install op-opsdevnz
