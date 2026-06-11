@@ -56,4 +56,3 @@ uv run zensical build
 ## Related
 
 - [OpsDev.nz Collective](https://opsdev.nz) — Parent project
-- [Module template](https://github.com/startmeup-nz/practice-template-opsdevnz)

@@ -90,4 +90,3 @@ This repository is frequently edited by AI agents.
 ## Related
 
 - [OpsDev.nz Collective](https://opsdev.nz) — Parent project
-- [Module template](https://github.com/startmeup-nz/practice-template-opsdevnz)
