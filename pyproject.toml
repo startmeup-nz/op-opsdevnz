@@ -7,7 +7,7 @@ name = "op-opsdevnz"
 version = "0.1.4"
 description = "OpsDev.nz helpers for resolving 1Password secrets with Service Account + CLI fallback."
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
@@ -22,11 +22,9 @@ classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Security",
     "Topic :: System :: Systems Administration",
@@ -45,6 +43,7 @@ dev = [
     "pytest-mock>=3.14.0",
     "ruff>=0.6.5",
     "twine>=5.1.1",
+    "zensical>=0.0.45",
 ]
 test = [
     "pytest>=8.3.0",
@@ -61,7 +60,7 @@ Issues = "https://github.com/startmeup-nz/op-opsdevnz/issues"
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B"]
@@ -71,7 +70,7 @@ select = ["E", "F", "I", "B"]
 "src/op_opsdevnz/__init__.py" = ["F401"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 strict_optional = true
 namespace_packages = true
 warn_unreachable = true
