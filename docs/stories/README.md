@@ -25,10 +25,13 @@ development and dogfooding.*
 ### As a <persona>, I want to <goal> so that <reason>
 
 **Acceptance Criteria:**
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 
-**Notes:** Additional context, edge cases, related issues.
+**Notes:**
+
+Additional context, edge cases, related issues.
 ```
 
 ## Related
