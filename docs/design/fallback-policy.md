@@ -17,8 +17,9 @@ resolve through a developer's broader, locally authenticated `op` CLI session.
 Authentication and authorization failures should not switch principals without
 the caller knowing.
 
-NFR-3 mandates graceful fallback, so the policy change must reconcile with that
-requirement.
+NFR-3 currently mandates unconditional fallback. It is reworded to conditional
+fallback with this change, so the requirement describes the same policy as this
+ADR (see Resolved Questions).
 
 ## Current Behaviour
 
@@ -56,8 +57,24 @@ requirement.
 Adopt option 2. Introduce a distinction between configuration absence and
 runtime auth failure:
 
-- `SecretError` subclasses, for example `SdkNotConfiguredError` and
-  `SdkAuthError`, let the resolver decide when fallback is safe.
+- Two `SecretError` subclasses: `SdkNotConfiguredError` and `SdkAuthError`.
+  The resolver decides which to raise from its own pre-checks and call
+  context, never by inspecting SDK exception types.
+- Classification is by configuration state, not exception type. The SDK
+  exposes no typed exceptions for "not configured" versus "auth failed": a
+  rejected token raises a bare `Exception("invalid user input: ...")`
+  (verified empirically against onepassword-sdk 0.4.0), and the only typed
+  exceptions in the SDK are `DesktopSessionExpiredException` (desktop-app
+  only, not the service-account path) and `RateLimitExceededException`.
+  So the resolver's pre-checks decide:
+  - `SdkNotConfiguredError` — fallback to CLI allowed: token absent, or the
+    SDK import fails.
+  - `SdkAuthError` — hard failure, no fallback: any error from
+    `Client.authenticate()` or `client.secrets.resolve()` while the SDK path
+    is configured.
+- The rule is binary: once the SDK path is configured, any failure — including
+  transient ones such as rate limits — is a hard failure. No principal
+  switching.
 - Revisit `octodns_hooks.py`: `prefer_cli` should not be forced unconditionally.
   In CI, the CLI and the SDK resolve as the same principal, so the hook should
   let the SDK path run once it works ([ADR-001](service-account-resolution.md)).
@@ -68,10 +85,10 @@ runtime auth failure:
 
 CI nuance: with `OP_SERVICE_ACCOUNT_TOKEN` set, the CLI authenticates as the
 same service-account principal the SDK would use, so CLI-first resolution in
-the pipeline is not a credential downgrade. The identity-switch risk from issue
-#8 is a workstation concern, where a human `op` session can sit next to a
-service-account token. The conditional fallback above targets that case; in CI
-the two paths are interchangeable.
+the pipeline is not a credential downgrade. The identity-switch risk from
+issue \#8 is a workstation concern, where a human `op` session can sit next
+to a service-account token. The conditional fallback above targets that
+case; in CI the two paths are interchangeable.
 
 ## Implementation Order
 
@@ -85,13 +102,19 @@ current failure mode would be bucketed as "configured but broken" rather than
 "not configured". Sequencing ADR-001 first avoids the transitional rule
 entirely.
 
-## Open Questions
+## Resolved Questions (2026-08-04)
 
-- Whether callers should be able to pin a required source, for example
-  `assert source == "sdk"`, for automation that must never use the CLI.
-- Which SDK exceptions map to "not configured" versus "auth failed".
-- Whether NFR-3 needs rewording to describe conditional rather than
-  unconditional fallback.
+- **Pinning a required source.** Deferred. Callers can already assert
+  `resolution.source == "sdk"` (FR-4) after the fact, and this ADR's binary
+  rule removes the dangerous silent fallback. No consumer has asked for
+  first-class pinning; revisit if one does.
+- **Which SDK exceptions map to "not configured" versus "auth failed".**
+  None do: the SDK raises a bare `Exception` for token rejection and has no
+  typed "not configured" exception (see Proposed Decision). Classification is
+  by configuration state, decided by the resolver's pre-checks.
+- **Whether NFR-3 needs rewording.** Yes — and FR-2 too. Both are reworded to
+  conditional fallback in this change, so the specs and this ADR describe the
+  same policy.
 
 ## More Information
 

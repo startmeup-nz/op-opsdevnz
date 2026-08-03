@@ -95,6 +95,11 @@ verified `Client` API in `onepassword_sdk.py`:
   CLI before release, so the packaged artifact is verified.
 - `RELEASING.md` describes a TestPyPI smoke-test stage that `publish.yml` does
   not implement; align the workflow with the documented stage.
+- `_package_version()` must not return a version containing build metadata:
+  the SDK rejects `+` in the integration version ("integration version
+  contained unallowed char"), and the current fallback `"0.0.0+dev"`, used
+  when package metadata is unavailable, would make `Client.authenticate()`
+  fail. Use a plain semver fallback such as `"0.0.0"`.
 
 ## Consequences
 
@@ -105,10 +110,14 @@ verified `Client` API in `onepassword_sdk.py`:
   the provider chain is invoked, so the constraint binds current and future
   callers.
 
-## Open Questions
+## Resolved Questions (2026-08-04)
 
-- Whether to cache the authenticated `Client` across resolutions within one
-  process. Avoids per-call authentication; complicates token rotation.
+- **Caching the authenticated `Client` across resolutions.** Deferred.
+  Per-call authentication matches the current `onepassword_sdk.py` behaviour,
+  and the module's usage is a handful of lookups per run, so the cost is not
+  significant. Caching avoids repeated authentication but complicates token
+  rotation and adds lifecycle state; it stays a later optimisation behind the
+  unchanged API.
 
 ## More Information
 
