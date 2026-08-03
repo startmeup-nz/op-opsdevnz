@@ -21,7 +21,10 @@ Error messages SHALL redact any tokens or secret values before display.
 
 ### NFR-3: Reliability — Graceful fallback
 
-When the primary resolver (SDK) fails, the module SHALL attempt the secondary resolver (CLI) before raising an error.
+When the SDK path is not configured (SDK not installed, or no service-account
+token), the module SHALL attempt the secondary resolver (CLI) before raising an
+error. When the SDK path is configured and fails, the module SHALL raise an
+error without falling back to the CLI.
 
 ### NFR-4: Reliability — Timeout handling
 
@@ -29,7 +32,7 @@ CLI invocations SHALL have a configurable timeout (default: 10 seconds) to preve
 
 ### NFR-5: Compatibility — Python versions
 
-The module SHALL support Python 3.10 and later.
+The module SHALL support Python 3.12 and later.
 
 ### NFR-6: Compatibility — 1Password SDK versions
 

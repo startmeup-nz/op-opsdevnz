@@ -13,9 +13,17 @@ rationale.
 
 | ID | Title | Status |
 |----|-------|--------|
-| — | — | — |
+| 001 | [Service-Account Resolution](service-account-resolution.md) | Draft |
+| 002 | [Public Namespace](public-namespace.md) | Draft |
+| 003 | [SDK-to-CLI Fallback Policy](fallback-policy.md) | Draft |
 
-*No design decisions recorded yet. Add them as the module evolves.*
+- **001 Service-Account Resolution**: Use the real `onepassword-sdk` `Client`
+  API in the primary resolver, sourced from `onepassword_sdk.py`, with sync
+  entry points unchanged.
+- **002 Public Namespace**: Consolidate to a single `op_opsdevnz` package,
+  matching the distro name, sibling modules, and existing consumers.
+- **003 Fallback Policy**: Fall back to the CLI only when the SDK path is
+  unconfigured; hard-fail on SDK auth errors so principals never switch.
 
 ## ADR Template
 

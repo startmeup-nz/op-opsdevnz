@@ -17,7 +17,10 @@ The module SHALL resolve `op://Vault/Item/Field` references using the official 1
 
 ### FR-2: Fallback to op CLI
 
-When the SDK is unavailable or fails, the module SHALL fall back to the `op` CLI binary if installed and authenticated.
+When the SDK path is not configured (SDK not installed, or no service-account
+token), the module SHALL fall back to the `op` CLI binary if installed and
+authenticated. When the SDK path is configured and fails, the module SHALL
+raise an error without falling back.
 
 ### FR-3: Environment override
 
