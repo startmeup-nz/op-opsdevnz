@@ -69,9 +69,21 @@ runtime auth failure:
 CI nuance: with `OP_SERVICE_ACCOUNT_TOKEN` set, the CLI authenticates as the
 same service-account principal the SDK would use, so CLI-first resolution in
 the pipeline is not a credential downgrade. The identity-switch risk from issue
-\#8 is a workstation concern, where a human `op` session can sit next to a
+#8 is a workstation concern, where a human `op` session can sit next to a
 service-account token. The conditional fallback above targets that case; in CI
 the two paths are interchangeable.
+
+## Implementation Order
+
+ADR-001 must land before ADR-003. Until the SDK path works,
+`_resolve_via_sdk()` raises `SecretError("onepassword-sdk not installed")`
+even when the SDK is installed. If ADR-003 shipped first, that error would
+need a transitional classification: map it to `SdkNotConfiguredError`
+(fallback allowed), not `SdkAuthError` (hard failure), or every workstation's
+silent-but-working CLI fallback would become a hard failure, because the
+current failure mode would be bucketed as "configured but broken" rather than
+"not configured". Sequencing ADR-001 first avoids the transitional rule
+entirely.
 
 ## Open Questions
 

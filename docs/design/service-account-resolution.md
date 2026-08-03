@@ -84,18 +84,31 @@ verified `Client` API in `onepassword_sdk.py`:
 ## Guardrails (with issue #8)
 
 - Tests must import the real SDK symbols and fail when the adapter references a
-  missing symbol. The `raising=False` fake must be removed.
+  missing symbol. The `raising=False` fake must be removed. Mypy cannot catch
+  this class of error because `ignore_missing_imports` is enabled, so the
+  test-level import guard is the enforcement point.
+- The import guard must narrow to `except ImportError`, or be removed once the
+  real `Client` import lands. A bare `except Exception` silently reclassifies
+  genuine runtime bugs in the new code path as "SDK not installed", the same
+  way the current guard hides the interface mismatch.
 - CI must build the wheel, install it, import the package, and smoke-test the
   CLI before release, so the packaged artifact is verified.
 - `RELEASING.md` describes a TestPyPI smoke-test stage that `publish.yml` does
   not implement; align the workflow with the documented stage.
 
+## Consequences
+
+- The sync resolver is a hard API contract: `resolve_secret()` must not be
+  invoked from within a running event loop, because the `asyncio.run()` bridge
+  fails there. Async callers must use the async API in `onepassword_sdk.py`
+  directly. OctoDNS provider chains can run in async contexts depending on how
+  the provider chain is invoked, so the constraint binds current and future
+  callers.
+
 ## Open Questions
 
 - Whether to cache the authenticated `Client` across resolutions within one
   process. Avoids per-call authentication; complicates token rotation.
-- `asyncio.run()` fails inside a running event loop. Callers that resolve
-  secrets from async code should use the async API in `onepassword_sdk.py`.
 
 ## More Information
 

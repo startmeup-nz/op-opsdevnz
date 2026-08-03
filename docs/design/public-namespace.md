@@ -66,11 +66,12 @@ Notes:
   generic name.
 - Coordinate the change with `octodns-metaname` and `oc-opsdevnz` docs that
   reference the module.
-
-## Open Questions
-
-- Whether to ship one deprecation release that keeps `opsdevnz` as a shim
-  pointing at `op_opsdevnz`, or to remove the shim in the same release.
+- No deprecation shim: remove `opsdevnz` in the same 0.2.0 release and note the
+  import path change in the changelog. External consumers already import
+  `op_opsdevnz`, and the 0.x versioning policy permits the breaking change.
+- If the package gains a `py.typed` marker or type stubs before the move, they
+  must move with the package; one left behind in `src/opsdevnz/` would claim
+  typing support for a package that no longer exists.
 
 ## More Information
 
