@@ -1,7 +1,7 @@
 # SDK-to-CLI Fallback Policy
 
-**Status:** Draft
-**Created:** 2026-08-03
+**Status:** Draft<br />
+**Created:** 2026-08-03<br />
 **Author:** OpsDev.nz Platform Engineering
 
 ---
@@ -69,7 +69,7 @@ runtime auth failure:
 CI nuance: with `OP_SERVICE_ACCOUNT_TOKEN` set, the CLI authenticates as the
 same service-account principal the SDK would use, so CLI-first resolution in
 the pipeline is not a credential downgrade. The identity-switch risk from issue
-#8 is a workstation concern, where a human `op` session can sit next to a
+\#8 is a workstation concern, where a human `op` session can sit next to a
 service-account token. The conditional fallback above targets that case; in CI
 the two paths are interchangeable.
 
