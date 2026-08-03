@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2026-08-04
+### Changed
+- Added design ADRs for SDK resolution, public namespace, and fallback policy
+  (PR #10), and aligned NFR-3/FR-2 (conditional fallback) and NFR-5 (Python
+  3.12+) with the agreed design.
+
 ## [0.1.4] - 2025-11-12
 ### Added
 - First production PyPI release, enabling downstream repos to depend on
