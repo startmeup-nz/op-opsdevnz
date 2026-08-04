@@ -31,6 +31,10 @@ result = resolve_secret(
 print(result.value, result.source)  # -> ('***', 'sdk' | 'cli' | 'env')
 ```
 
+The sync entry points bridge the SDK with `asyncio.run()` and must not be
+called from a running event loop; async callers use
+`op_opsdevnz.onepassword_sdk.resolve_secret_async()` directly.
+
 ## Documentation
 
 - **[Specifications](specs/)** — Functional and non-functional requirements

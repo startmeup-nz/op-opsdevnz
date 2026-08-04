@@ -2,7 +2,14 @@
 
 [![CI](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml/badge.svg)](https://github.com/startmeup-nz/op-opsdevnz/actions/workflows/ci.yml)
 
-Python package for resolving 1Password `op://` secrets across CI service accounts and developer workstations, plus a CLI fallback that depends on the authenticated 1Password CLI binary. Keeps OctoDNS and other automation workflows secret-free. Packaged for reuse by OpsDev.nz, a platform engineering collective sponsored by StartMeUp.nz.
+Resolve 1Password `op://` secret references at runtime so automation code
+stays secret-free. Resolution uses the official 1Password Service Account SDK
+for CI, with a conditional fallback to the `op` CLI for local development —
+and a strict security posture: credential principals never switch silently,
+and errors never leak secret values, fragments, or references.
+
+Maintained by OpsDev.nz, a platform engineering collective sponsored by
+StartMeUp.nz.
 
 ## Features
 
@@ -24,15 +31,19 @@ Python package for resolving 1Password `op://` secrets across CI service account
 ## Installation
 
 ```bash
-# editable install while developing locally
-pip install -e .
-
 # latest release from PyPI
 pip install op-opsdevnz
 
 # or install straight from GitHub if you need main branch changes
 pip install git+https://github.com/startmeup-nz/op-opsdevnz.git
 ```
+
+Requires Python 3.12+ and one of:
+
+- **CI / automation:** `OP_SERVICE_ACCOUNT_TOKEN` set (a
+  [1Password Service Account](https://developer.1password.com/docs/service-accounts/))
+- **Workstations:** the [1Password CLI](https://developer.1password.com/docs/cli/)
+  installed and signed in (`op signin`)
 
 ## Usage
 
@@ -55,6 +66,29 @@ CLI equivalent:
 op-opsdevnz resolve --ref "op://Vault/Item/Field" --show-source
 op-opsdevnz resolve --ref-env METANAME_API_TOKEN_REF --env-override METANAME_API_TOKEN
 op-opsdevnz resolve --ref "op://Vault/Item/Field" --no-mask  # print the value
+```
+
+### Async Usage
+
+`resolve_secret()` and `get_secret()` are synchronous and must not be called
+from within a running event loop (they bridge the SDK with `asyncio.run()`
+and raise a clear error there). Async callers use the async API directly:
+
+```python
+from op_opsdevnz.onepassword_sdk import resolve_secret_async
+
+value = await resolve_secret_async("op://Vault/Item/Field")
+```
+
+### Secret Reference Files
+
+For per-environment reference files (references only — no secret values, safe
+to commit):
+
+```python
+from op_opsdevnz.env import load_refs
+
+load_refs("staging")  # loads .env.refs.staging into the environment
 ```
 
 ### Fallback Policy
