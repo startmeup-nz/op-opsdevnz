@@ -25,8 +25,8 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install bandit
-        run: pip install bandit
+      - name: Install bandit (with SARIF formatter)
+        run: pip install "bandit[sarif]"
 
       - name: Run bandit (fails on medium+ severity)
         run: bandit -r src/ -ll -f sarif -o bandit-results.sarif
