@@ -10,7 +10,7 @@ import sys
 from importlib import metadata
 from typing import List, Optional
 
-from .onepassword import SecretError, resolve_secret
+from .onepassword import DEFAULT_CLI_TIMEOUT, SecretError, resolve_secret
 
 
 def _mask(value: str) -> str:
@@ -73,8 +73,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     resolve.add_argument(
         "--timeout",
         type=float,
-        default=10.0,
-        help="Timeout for CLI fallback (seconds)",
+        default=DEFAULT_CLI_TIMEOUT,
+        help=f"Timeout for CLI fallback in seconds (default: {DEFAULT_CLI_TIMEOUT:g})",
     )
 
     args = parser.parse_args(argv)

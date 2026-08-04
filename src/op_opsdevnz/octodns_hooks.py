@@ -11,9 +11,15 @@ def _prefer_cli() -> bool:
 
     Workstations (no service-account token) resolve CLI-first, where the
     signed-in ``op`` session is the intended principal. When
-    ``OP_SERVICE_ACCOUNT_TOKEN`` is set, the SDK path runs first; in CI the
-    CLI and SDK authenticate as the same service-account principal, so the
-    order carries no credential downgrade risk there.
+    ``OP_SERVICE_ACCOUNT_TOKEN`` is set, the SDK path runs first and any
+    failure is a hard error — no fallback.
+
+    The one remaining CLI path with a token set (SDK not installed) stays
+    same-principal: the ``op`` CLI itself authenticates via
+    ``OP_SERVICE_ACCOUNT_TOKEN`` when it is present. This assumes CI runners
+    never carry a signed-in CLI session for a *different* principal alongside
+    the token; such a runner would be a misconfiguration to fix, not to
+    accommodate.
     """
     return not os.getenv("OP_SERVICE_ACCOUNT_TOKEN")
 

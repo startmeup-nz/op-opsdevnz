@@ -5,6 +5,7 @@ import subprocess
 import pytest
 
 from op_opsdevnz.__main__ import _mask, main
+from op_opsdevnz.onepassword import DEFAULT_CLI_TIMEOUT
 
 
 def test_version_exits_zero(capsys):
@@ -79,3 +80,20 @@ def test_mask_reveals_nothing():
 def test_mask_constant_length_hides_secret_length():
     masked = {_mask("a" * n) for n in (1, 8, 64)}
     assert masked == {"********"}
+
+
+def test_cli_timeout_default_is_the_shared_constant(monkeypatch, capsys):
+    """The CLI --timeout default and the resolver default must not drift."""
+    captured = {}
+
+    def _run(*args, **kwargs):
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(args, 0, stdout="cli-secret\n", stderr="")
+
+    monkeypatch.delenv("OP_SERVICE_ACCOUNT_TOKEN", raising=False)
+    monkeypatch.setattr("op_opsdevnz.onepassword.shutil.which", lambda _: "/usr/bin/op")
+    monkeypatch.setattr("op_opsdevnz.onepassword.subprocess.run", _run)
+
+    assert main(["resolve", "--ref", "op://V/I/F", "--prefer-cli"]) == 0
+    assert captured["timeout"] == DEFAULT_CLI_TIMEOUT
+    capsys.readouterr()  # drain masked output

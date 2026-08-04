@@ -49,6 +49,11 @@ class SdkAuthError(SecretError):
     """
 
 
+#: Default timeout (seconds) for ``op`` CLI invocations. The CLI ``--timeout``
+#: flag in ``op_opsdevnz.__main__`` defaults to this same value — keep them
+#: in sync by changing it here only.
+DEFAULT_CLI_TIMEOUT = 10.0
+
 SecretSource = Literal["env", "sdk", "cli"]
 
 
@@ -124,7 +129,7 @@ def _resolve_via_sdk(secret_ref: str) -> str:
     )
 
 
-def _resolve_via_cli(secret_ref: str, timeout: float = 10.0) -> str:
+def _resolve_via_cli(secret_ref: str, timeout: float = DEFAULT_CLI_TIMEOUT) -> str:
     op_path = shutil.which("op")
     if not op_path:
         raise SecretError("1Password CLI 'op' not found in PATH")
@@ -154,7 +159,7 @@ def resolve_secret(
     secret_ref: Optional[str] = None,
     env_override: Optional[str] = None,
     prefer_cli: bool = False,
-    timeout: float = 10.0,
+    timeout: float = DEFAULT_CLI_TIMEOUT,
 ) -> SecretResolution:
     """Resolve a 1Password secret and report which resolver produced it.
 
@@ -209,7 +214,7 @@ def get_secret(
     secret_ref: Optional[str] = None,
     env_override: Optional[str] = None,
     prefer_cli: bool = False,
-    timeout: float = 10.0,
+    timeout: float = DEFAULT_CLI_TIMEOUT,
 ) -> str:
     """Backward-compatible helper that returns only the secret value."""
 
