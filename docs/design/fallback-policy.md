@@ -1,6 +1,6 @@
 # SDK-to-CLI Fallback Policy
 
-**Status:** Draft<br />
+**Status:** Accepted (implemented in 0.2.0)<br />
 **Created:** 2026-08-03<br />
 **Author:** OpsDev.nz Platform Engineering
 

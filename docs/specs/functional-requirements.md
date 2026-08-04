@@ -32,7 +32,10 @@ The module SHALL report which resolver produced the secret value (`sdk`, `cli`, 
 
 ### FR-5: CLI interface
 
-The module SHALL provide a CLI (`op-opsdevnz resolve`) that mirrors the Python API semantics.
+The module SHALL provide a CLI (`op-opsdevnz resolve`) that follows the same
+resolution semantics as the Python API. Output SHALL be an opaque mask by
+default; the resolved value is printed only with the explicit `--no-mask`
+flag.
 
 ### FR-6: OctoDNS integration
 

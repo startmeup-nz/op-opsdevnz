@@ -9,7 +9,7 @@ or managed — pushing a version tag triggers the pipeline.
 | What | Rule |
 |------|------|
 | Versioning | [Semantic Versioning](https://semver.org) |
-| Tag format | `v<version>` (e.g. `v0.1.0`) |
+| Tag format | `v<version>` (e.g. `v0.2.0`) |
 | Branch | `main` only — tags must point at a commit on `main` |
 | Auth | Trusted Publishing (OIDC) — no API tokens |
 
@@ -17,7 +17,8 @@ or managed — pushing a version tag triggers the pipeline.
 
 - `uv` installed
 - Clean `main` branch, CI green
-- PyPI Trusted Publisher configured on Test PyPI and PyPI
+- PyPI Trusted Publisher configured for the `pypi` environment on PyPI, and
+  for the `testpypi` environment on TestPyPI
 
 ## Release Workflow
 
@@ -27,9 +28,9 @@ On a branch off `main`:
 
 ```bash
 # Bump version in pyproject.toml
-version = "0.1.0"
+version = "0.2.0"
 
-# Move changelog entries from [Unreleased] to [0.1.0]
+# Move changelog entries from [Unreleased] to [0.2.0]
 ```
 
 ### 2. Merge and tag
@@ -37,8 +38,8 @@ version = "0.1.0"
 ```bash
 git checkout main
 git pull origin main
-git tag -s v0.1.0 -m "v0.1.0"
-git push origin v0.1.0
+git tag -s v0.2.0 -m "v0.2.0"
+git push origin v0.2.0
 ```
 
 ### 3. Watch CI
@@ -47,13 +48,14 @@ Pushing the tag fires `.github/workflows/publish.yml`:
 
 | Job | What it does |
 |-----|-------------|
-| `test-pypi` | Builds wheel, publishes to Test PyPI, installs and runs `op-opsdevnz --help` |
-| `pypi` | Runs only if test-pypi passes, publishes to real PyPI |
+| `verify` | Fails unless the tag matches `pyproject.toml`; runs ruff, mypy, pytest (with coverage threshold), builds the artifacts, `twine check`s them, and smoke-tests the built wheel in a clean venv |
+| `test-pypi` | Publishes the verified artifacts to TestPyPI, installs from TestPyPI, and runs `op-opsdevnz --help` / `--version` |
+| `pypi` | Runs only if `test-pypi` passes; publishes the same verified artifacts to PyPI |
 
 ### 4. Verify
 
 ```bash
-pip install op-opsdevnz==0.1.0
+pip install op-opsdevnz==0.2.0
 op-opsdevnz --help
 ```
 
@@ -61,4 +63,4 @@ op-opsdevnz --help
 
 To validate the pipeline without publishing to real PyPI, temporarily comment
 out the `pypi` job in `.github/workflows/publish.yml`, tag and push, then
-restore it after confirming Test PyPI succeeds.
+restore it after confirming TestPyPI succeeds.

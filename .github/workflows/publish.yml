@@ -6,20 +6,115 @@ on:
       - "v*"
 
 jobs:
-  publish:
+  verify:
+    # Gate every release on the same checks as CI, plus tag/version agreement,
+    # before anything is published.
     runs-on: ubuntu-latest
-    environment: pypi
     permissions:
-      id-token: write
-
+      contents: read
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: Build package
+
+      - name: Check tag matches package version
         run: |
-          pip install build
-          python -m build
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          echo "tag=$TAG package=$PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match pyproject.toml version $PKG"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Ruff
+        run: ruff check src tests
+
+      - name: Mypy
+        run: mypy src
+
+      - name: Pytest
+        run: pytest --cov --cov-report=term-missing
+
+      - name: Build artifacts
+        run: python -m build
+
+      - name: Check artifact metadata
+        run: twine check dist/*
+
+      - name: Smoke-test built wheel
+        run: |
+          python -m venv /tmp/wheel-smoke
+          /tmp/wheel-smoke/bin/pip install --upgrade pip
+          /tmp/wheel-smoke/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/wheel-smoke/bin/python -c "import op_opsdevnz; from op_opsdevnz.onepassword import resolve_secret"
+          /tmp/wheel-smoke/bin/op-opsdevnz --version
+
+      - name: Upload artifacts for publish jobs
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  test-pypi:
+    # Documented smoke-test stage: publish to TestPyPI, install from there,
+    # and exercise the CLI before the real PyPI publish runs.
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Install from TestPyPI and smoke-test
+        run: |
+          python -m venv /tmp/testpypi-smoke
+          /tmp/testpypi-smoke/bin/pip install --upgrade pip
+          PKG_VERSION="${GITHUB_REF_NAME#v}"
+          # Dependencies resolve from real PyPI; only the package itself from TestPyPI.
+          /tmp/testpypi-smoke/bin/pip install \
+            --index-url https://test.pypi.org/simple/ \
+            --extra-index-url https://pypi.org/simple/ \
+            "op-opsdevnz==${PKG_VERSION}"
+          cd /tmp
+          /tmp/testpypi-smoke/bin/op-opsdevnz --help
+          /tmp/testpypi-smoke/bin/op-opsdevnz --version
+
+  pypi:
+    needs: test-pypi
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

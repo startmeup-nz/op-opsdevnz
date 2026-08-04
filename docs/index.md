@@ -22,7 +22,7 @@ uv pip install op-opsdevnz
 op-opsdevnz resolve --ref "op://Vault/Item/Field" --show-source
 
 # Or use the Python API
-from opsdevnz.onepassword import resolve_secret
+from op_opsdevnz.onepassword import resolve_secret
 
 result = resolve_secret(
     secret_ref_env="METANAME_API_TOKEN_REF",

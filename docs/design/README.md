@@ -13,9 +13,9 @@ rationale.
 
 | ID | Title | Status |
 |----|-------|--------|
-| 001 | [Service-Account Resolution](service-account-resolution.md) | Draft |
-| 002 | [Public Namespace](public-namespace.md) | Draft |
-| 003 | [SDK-to-CLI Fallback Policy](fallback-policy.md) | Draft |
+| 001 | [Service-Account Resolution](service-account-resolution.md) | Accepted (0.2.0) |
+| 002 | [Public Namespace](public-namespace.md) | Accepted (0.2.0) |
+| 003 | [SDK-to-CLI Fallback Policy](fallback-policy.md) | Accepted (0.2.0) |
 
 - **001 Service-Account Resolution**: Use the real `onepassword-sdk` `Client`
   API in the primary resolver, sourced from `onepassword_sdk.py`, with sync

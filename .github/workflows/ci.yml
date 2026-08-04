@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -36,8 +36,72 @@ jobs:
       - name: Mypy
         run: mypy src
 
-      - name: Pytest
-        run: pytest --color=yes --durations=10
+      - name: Pytest (coverage threshold enforced from pyproject.toml)
+        run: pytest --cov --cov-report=term-missing
+
+  build-smoke:
+    # Build the wheel, install it into a clean venv, and smoke-test the
+    # packaged artifact: canonical imports, CLI entry point, and SDK adapter.
+    # Tests against the source tree alone cannot catch packaging regressions.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
 
       - name: Build artifacts
-        run: python -m build
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+          python -m build
+
+      - name: Check artifact metadata
+        run: twine check dist/*
+
+      - name: Verify wheel contents
+        run: |
+          python - <<'EOF'
+          import glob
+          import zipfile
+
+          wheels = glob.glob("dist/*.whl")
+          assert len(wheels) == 1, f"expected exactly one wheel, got {wheels}"
+          names = zipfile.ZipFile(wheels[0]).namelist()
+          top_levels = {n.split("/")[0] for n in names if "/" in n}
+          print("wheel top-level entries:", sorted(top_levels))
+          assert "op_opsdevnz" in top_levels, "canonical package missing from wheel"
+          assert "opsdevnz" not in top_levels, "legacy namespace leaked into wheel"
+          EOF
+
+      - name: Install wheel into a clean venv
+        run: |
+          python -m venv /tmp/wheel-smoke
+          /tmp/wheel-smoke/bin/pip install --upgrade pip
+          /tmp/wheel-smoke/bin/pip install dist/*.whl
+
+      - name: Smoke-test installed artifact
+        run: |
+          cd /tmp  # ensure we import the installed wheel, not the source tree
+          /tmp/wheel-smoke/bin/python -c "
+          import op_opsdevnz
+          from op_opsdevnz.onepassword import (
+              SdkAuthError,
+              SdkNotConfiguredError,
+              SecretError,
+              SecretResolution,
+              get_secret,
+              resolve_secret,
+          )
+          from op_opsdevnz.onepassword_sdk import get_secret_from_ref_env, resolve_secret_async
+          from op_opsdevnz.octodns_hooks import resolve
+          from op_opsdevnz.env import load_refs
+          from onepassword.client import Client  # SDK adapter target must exist
+          assert hasattr(Client, 'authenticate')
+          print('canonical imports OK')
+          "
+          /tmp/wheel-smoke/bin/op-opsdevnz --version
+          /tmp/wheel-smoke/bin/op-opsdevnz resolve --help
