@@ -88,7 +88,7 @@ to commit):
 ```python
 from op_opsdevnz.env import load_refs
 
-load_refs("staging")  # loads .env.refs.staging into the environment
+load_refs("staging")  # loads .env.staging into the environment
 ```
 
 ### Fallback Policy
