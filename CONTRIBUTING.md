@@ -20,11 +20,8 @@ linting, tests, and packaging.
 |-----------|---------------------------------------------|
 | Lint      | `ruff check src tests`                      |
 | Type check| `mypy src`                                  |
-| Tests     | `pytest --color=yes --durations=10`         |
+| Tests     | `pytest --cov --cov-report=term-missing`    |
 | Build     | `python -m build`                           |
-
-You can also run `make lint`, `make test`, or `make build` if you prefer
-Makefile shortcuts.
 
 ## Pull Requests
 

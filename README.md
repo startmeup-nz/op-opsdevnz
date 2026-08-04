@@ -123,9 +123,10 @@ The hook resolves CLI-first on workstations (no token) and SDK-first when
 ## Development
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e .[dev]
-make check
+uv sync --extra dev
+uv run ruff check src tests
+uv run mypy src
+uv run python -m pytest tests/ --cov
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and
