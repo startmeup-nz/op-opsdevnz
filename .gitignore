@@ -6,6 +6,9 @@ __pycache__/
 .DS_Store
 .env
 .env.*
+# Reference files contain only op:// references (no secret values) and are
+# intentionally committable — see src/op_opsdevnz/env.py.
+!.env.refs.*
 .venv
 venv/
 .pytest_cache/

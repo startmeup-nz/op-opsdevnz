@@ -1,13 +1,24 @@
 """
-Compatibility wrapper exposing opsdevnz helpers under the op_opsdevnz namespace.
+op_opsdevnz — 1Password secret resolution for OpsDev.nz automation.
 
-Downstream code can import from ``op_opsdevnz`` while the canonical modules live
-under ``opsdevnz``.
+Exposes helpers for resolving ``op://`` secrets via the 1Password Service
+Account SDK, with a conditional ``op`` CLI fallback for local development.
 """
 
-from opsdevnz.onepassword import (  # noqa: F401
+from .onepassword import (  # noqa: F401
+    SdkAuthError,
+    SdkNotConfiguredError,
     SecretError,
     SecretResolution,
     get_secret,
     resolve_secret,
 )
+
+__all__ = [
+    "SdkAuthError",
+    "SdkNotConfiguredError",
+    "SecretError",
+    "SecretResolution",
+    "get_secret",
+    "resolve_secret",
+]

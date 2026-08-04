@@ -14,6 +14,9 @@ permissions:
 
 jobs:
   bandit:
+    # Policy (see SECURITY.md): medium severity and above fails the build.
+    # Low-severity findings (e.g. accepted subprocess usage) are still
+    # reported to the Security tab via SARIF.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -25,16 +28,18 @@ jobs:
       - name: Install bandit
         run: pip install bandit
 
-      - name: Run bandit
-        run: bandit -r src/ -f sarif -o bandit-results.sarif || true
+      - name: Run bandit (fails on medium+ severity)
+        run: bandit -r src/ -ll -f sarif -o bandit-results.sarif
 
       - name: Upload bandit results
-        if: hashFiles('bandit-results.sarif') != ''
+        if: always() && hashFiles('bandit-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: bandit-results.sarif
 
-  safety:
+  pip-audit:
+    # Policy (see SECURITY.md): audit the project's own dependency set;
+    # known vulnerabilities fail the build.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -43,10 +48,10 @@ jobs:
         with:
           python-version: "3.14"
 
-      - name: Install pip-audit
+      - name: Install project and pip-audit
         run: |
           pip install --upgrade pip
-          pip install pip-audit
+          pip install . pip-audit
 
-      - name: Audit dependencies
+      - name: Audit project dependencies
         run: pip-audit
