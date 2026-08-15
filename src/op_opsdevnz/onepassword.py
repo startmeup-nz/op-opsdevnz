@@ -30,6 +30,11 @@ except ImportError:  # pragma: no cover
     Client = None
 
 
+# Base error for all secret-resolution failures. SdkNotConfiguredError and
+# SdkAuthError (below) inherit from this and distinguish "safe to fall back
+# to CLI" from "hard failure, don't silently switch credentials".
+# resolve_secret() will enforce taht policy via except clauses rather than
+# string-matching error messages.
 class SecretError(RuntimeError):
     """Raised when secret resolution fails."""
 
@@ -54,6 +59,8 @@ class SdkAuthError(SecretError):
 #: in sync by changing it here only.
 DEFAULT_CLI_TIMEOUT = 10.0
 
+# Secrets can come from env files, SDK or CLI, but only one is used per call.
+# `source` records which for identifying where a given value was resolved from.
 SecretSource = Literal["env", "sdk", "cli"]
 
 
@@ -78,6 +85,8 @@ def _package_version() -> str:
     return version.split("+")[0]
 
 
+# Identify this client integration to the 1Password SDK for request metadata,
+# diagnostics, and support; this does not control authentication or permissions.
 def _integration_meta() -> dict[str, str]:
     return {
         "integration_name": "OpsDev.nz",
@@ -85,6 +94,8 @@ def _integration_meta() -> dict[str, str]:
     }
 
 
+# The SDK performs network I/O asynchronously; async callers can let their
+# application event loop do other work while authentication or resolution waits.
 async def _resolve_ref_async(secret_ref: str) -> str:
     """Resolve an ``op://`` reference through the Service Account SDK.
 
@@ -92,6 +103,7 @@ async def _resolve_ref_async(secret_ref: str) -> str:
         SdkNotConfiguredError: SDK not installed or no token configured.
         SdkAuthError: SDK was configured but authenticate/resolve failed.
     """
+    # Client is None when the optional SDK import failed; CLI fallback may still be available.
     if Client is None:
         raise SdkNotConfiguredError("onepassword-sdk is not installed")
     token = os.getenv("OP_SERVICE_ACCOUNT_TOKEN")
@@ -101,8 +113,9 @@ async def _resolve_ref_async(secret_ref: str) -> str:
         client = await Client.authenticate(auth=token, **_integration_meta())
         value = await client.secrets.resolve(secret_ref)
     except Exception:
-        # The SDK raises bare exceptions whose messages can embed the reference
-        # or token diagnostics; never propagate them (NFR-1/NFR-2).
+        # TODO: This generic error hides SDK diagnostics, but these failures
+        # may occur before any secret value is returned. Test the SDK's actual
+        # exception contents before deciding whether this concealment is useful.
         raise SdkAuthError(
             "1Password SDK failed to resolve the secret "
             "(authentication, authorization, or resolution error)"
@@ -112,6 +125,8 @@ async def _resolve_ref_async(secret_ref: str) -> str:
     return value
 
 
+# Bridge synchronous callers to the SDK's async resolver when no event loop is
+# already running; async callers should use the dedicated async API directly.
 def _resolve_via_sdk(secret_ref: str) -> str:
     """Synchronous bridge over the async SDK flow.
 
@@ -129,7 +144,17 @@ def _resolve_via_sdk(secret_ref: str) -> str:
     )
 
 
+# TODO: Review whether raw subprocess diagnostics should remain out of
+# the public exception chain while retaining deliberately selected details such
+# as exit code and timeout duration.
 def _resolve_via_cli(secret_ref: str, timeout: float = DEFAULT_CLI_TIMEOUT) -> str:
+    """Resolve an ``op://`` reference through the locally authenticated CLI.
+
+    Raises:
+        SecretError: The CLI is unavailable, fails, times out, or returns no value.
+    """
+    # TODO: Consider an explicit OP_CLI_PATH override for installations outside
+    # PATH and container environments where the executable has a non-standard path.
     op_path = shutil.which("op")
     if not op_path:
         raise SecretError("1Password CLI 'op' not found in PATH")
@@ -175,6 +200,8 @@ def resolve_secret(
            SDK when available, so CI/service-account flows still work.
     """
 
+    # Allow an explicit environment override for tests and controlled local
+    # use; normal callers should prefer the SDK or authenticated CLI paths.
     if env_override and (value := os.getenv(env_override)):
         return SecretResolution(value=value, source="env")
 
@@ -182,6 +209,8 @@ def resolve_secret(
     if not reference or not reference.startswith("op://"):
         raise SecretError("A valid 1Password secret reference is required (op://Vault/Item/Field)")
 
+    # In CLI-first mode, prefer the developer's authenticated local CLI and
+    # use the SDK as a fallback for environments where the CLI is unavailable.
     if prefer_cli:
         try:
             value = _resolve_via_cli(reference, timeout=timeout)
@@ -192,9 +221,12 @@ def resolve_secret(
                 value = _resolve_via_sdk(reference)
                 return SecretResolution(value=value, source="sdk")
             except SecretError:
-                # raise original CLI error to preserve context for local devs
+                # Re-raise the CLI failure as the primary error while suppressing
+                # the secondary SDK failure from being attached to it.
                 raise cli_error from None
 
+    # Default to the Service Account SDK; use the CLI only when the SDK is not
+    # configured, avoiding a silent switch of credential principals on failure.
     try:
         value = _resolve_via_sdk(reference)
         return SecretResolution(value=value, source="sdk")
@@ -208,6 +240,8 @@ def resolve_secret(
         ) from sdk_error
 
 
+# TODO: Move the OctoDNS-specific hook into octodns-metaname, migrate it and
+# other internal callers to resolve_secret(), then remove this wrapper.
 def get_secret(
     *,
     secret_ref_env: Optional[str] = None,

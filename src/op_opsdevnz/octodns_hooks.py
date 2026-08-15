@@ -1,4 +1,9 @@
-"""Integration helpers between the OctoDNS Metaname provider and op_opsdevnz secrets."""
+"""Integration helpers between the OctoDNS Metaname provider and op_opsdevnz secrets.
+
+Deprecated: this provider-specific adapter is retained temporarily for
+compatibility. It is intended to move into the ``octodns-metaname`` module,
+leaving ``op-opsdevnz`` focused on generic secret resolution.
+"""
 
 import os
 from typing import Optional
