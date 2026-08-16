@@ -23,7 +23,6 @@ StartMeUp.nz.
 - Rich error handling plus an API that can return the secret value *and* which
   resolver was used.
 - Environment override helpers for CI sandboxes/tests.
-- OctoDNS hook (`op_opsdevnz.octodns_hooks.resolve`) for the Metaname provider.
 - Small CLI (`op-opsdevnz resolve …`) that follows the same resolution
   semantics as `resolve_secret()`. Output is an opaque mask by default;
   `--no-mask` prints the resolved value.
@@ -108,17 +107,10 @@ Resolution follows a strict rule (see `docs/design/fallback-policy.md`):
 Error classes `SdkNotConfiguredError` and `SdkAuthError` subclass
 `SecretError`, so existing `except SecretError` handlers keep working.
 
-### OctoDNS Hook
+### OctoDNS integration
 
-Set the resolver environment variable so the OctoDNS Metaname provider can load
-the helper automatically:
-
-```bash
-export OCTODNS_METANAME_SECRET_RESOLVER="op_opsdevnz.octodns_hooks:resolve"
-```
-
-The hook resolves CLI-first on workstations (no token) and SDK-first when
-`OP_SERVICE_ACCOUNT_TOKEN` is set, matching the fallback policy above.
+The Metaname-specific resolver adapter lives in the `octodns-metaname` module,
+which uses this package for generic 1Password resolution.
 
 ## Development
 

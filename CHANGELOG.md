@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-08-16
+
+### Documentation
+
+- Added explanatory comments and docstrings throughout the secret-resolution
+  flow, covering SDK metadata, async/sync boundaries, CLI resolution,
+  environment overrides, fallback policy, and the compatibility wrapper.
+- Documented that the provider-owned
+  `octodns_metaname.op_opsdevnz_hooks:resolve` adapter belongs in
+  `octodns-metaname`; the old hook remains transitional for compatibility.
+- Recorded follow-up questions around exception diagnostics and non-standard
+  CLI installation paths without changing runtime behaviour.
+
+### Changed
+
+- Removed the provider-specific OctoDNS hook from the module's documented
+  integration surface and updated the CI smoke test accordingly. The legacy
+  `op_opsdevnz.octodns_hooks` module remains available temporarily for
+  compatibility.
+
 ## [0.2.0] - 2026-08-04
 
 Implements the design decisions from PR #10 (ADRs 001–003) and resolves

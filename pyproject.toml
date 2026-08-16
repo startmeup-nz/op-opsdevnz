@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "op-opsdevnz"
-version = "0.2.0"
+version = "0.2.1"
 description = "OpsDev.nz helpers for resolving 1Password secrets with Service Account + CLI fallback."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.12"

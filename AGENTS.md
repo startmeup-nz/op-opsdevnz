@@ -55,11 +55,8 @@ uv run python -m pytest tests/test_onepassword.py -v
 
 ## Secret Resolution
 
-Users resolve 1Password secrets via `op_opsdevnz`:
-
-```bash
-export OCTODNS_METANAME_SECRET_RESOLVER="op_opsdevnz.octodns_hooks:resolve"
-```
+Users resolve 1Password secrets via the generic `op_opsdevnz` APIs. Provider-
+specific adapters belong in the consuming provider package.
 
 CI environments rely on `_REF` variables pointing to 1Password references.
 

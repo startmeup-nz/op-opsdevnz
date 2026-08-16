@@ -97,7 +97,6 @@ jobs:
               resolve_secret,
           )
           from op_opsdevnz.onepassword_sdk import get_secret_from_ref_env, resolve_secret_async
-          from op_opsdevnz.octodns_hooks import resolve
           from op_opsdevnz.env import load_refs
           from onepassword.client import Client  # SDK adapter target must exist
           assert hasattr(Client, 'authenticate')
