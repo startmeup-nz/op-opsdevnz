@@ -2,7 +2,8 @@
 
 Deprecated: this provider-specific adapter is retained temporarily for
 compatibility. It is intended to move into the ``octodns-metaname`` module,
-leaving ``op-opsdevnz`` focused on generic secret resolution.
+where the replacement is ``octodns_metaname.op_opsdevnz_hooks:resolve``;
+``op-opsdevnz`` remains focused on generic secret resolution.
 """
 
 import os

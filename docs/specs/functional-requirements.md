@@ -37,10 +37,6 @@ resolution semantics as the Python API. Output SHALL be an opaque mask by
 default; the resolved value is printed only with the explicit `--no-mask`
 flag.
 
-### FR-6: OctoDNS integration
-
-The module SHALL provide an OctoDNS hook (`op_opsdevnz.octodns_hooks:resolve`) for the Metaname provider.
-
 ---
 
 ## Related

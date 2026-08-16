@@ -22,7 +22,7 @@ Consumers cannot tell which import path is stable, and the docs disagree:
 | Distribution name | `op-opsdevnz` |
 | Console script | `opsdevnz.__main__:main` |
 | README and index examples | `from opsdevnz.onepassword import ...` |
-| FR-6 and AGENTS.md resolver string | `op_opsdevnz.octodns_hooks:resolve` |
+| Metaname resolver adapter | `octodns_metaname.op_opsdevnz_hooks:resolve` |
 | oc-opsdevnz imports | `from op_opsdevnz.onepassword import ...` |
 
 ## Evidence
@@ -36,7 +36,7 @@ replaced by underscores:
 External consumers already import `op_opsdevnz`:
 
 - `oc-opsdevnz` in `src/oc_opsdevnz/secrets.py` and four example scripts.
-- `octodns-metaname` via `OCTODNS_METANAME_SECRET_RESOLVER`.
+- `octodns-metaname` via its provider-owned `OCTODNS_METANAME_SECRET_RESOLVER` adapter.
 
 ## Options Considered
 
