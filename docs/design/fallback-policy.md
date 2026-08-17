@@ -1,123 +1,104 @@
 # SDK-to-CLI Fallback Policy
 
-**Status:** Accepted (implemented in 0.2.0)<br />
+**Status:** Accepted and implemented (0.2.0+)<br />
 **Created:** 2026-08-03<br />
 **Author:** OpsDev.nz Platform Engineering
 
 ---
 
-## Problem
+## Summary
 
-`resolve_secret()` falls back from the Service Account SDK to the `op` CLI on
-any `SecretError`, and `octodns_hooks.py` forces `prefer_cli=True`, which
-inverts the order to CLI-first.
+When the SDK path is configured (`OP_SERVICE_ACCOUNT_TOKEN` is set), any SDK
+failure is a **hard failure** — no fallback to the CLI. This prevents silent
+principal switching. Fallback is only allowed when the SDK path is not
+configured (token absent, SDK not installed).
 
-A process configured with a narrowly scoped service-account token can silently
+## Problem (historical)
+
+Previously, `resolve_secret()` fell back from the Service Account SDK to the
+`op` CLI on any `SecretError`, and the OctoDNS hook forced `prefer_cli=True`,
+which inverts the order to CLI-first.
+
+A process configured with a narrowly scoped service-account token could silently
 resolve through a developer's broader, locally authenticated `op` CLI session.
 Authentication and authorization failures should not switch principals without
 the caller knowing.
 
-NFR-3 currently mandates unconditional fallback. It is reworded to conditional
-fallback with this change, so the requirement describes the same policy as this
-ADR (see Resolved Questions).
+## Implemented Behaviour
 
-## Current Behaviour
+The resolver distinguishes between two error states:
 
-- SDK failure of any kind, including token rejection, falls through to the CLI.
-- `octodns_hooks.py` always resolves via the CLI first when `op` is present,
-  regardless of whether a service-account token is configured.
-- In CI, the `op` CLI is installed in the `python-opcli` container image and
-  authenticates via `OP_SERVICE_ACCOUNT_TOKEN`, so CLI resolution runs as the
-  same service-account principal the SDK would use. Pipelines pass for this
-  reason; the SDK path itself has never worked (see
-  [ADR-001](service-account-resolution.md)).
-- The unconditional fallback is why the SDK mismatch in ADR-001 went unnoticed:
-  every failure was absorbed by the CLI, so the dead interface never surfaced
-  until the resolution paths were reviewed.
+- **`SdkNotConfiguredError`** — fallback to CLI allowed: token absent, or the
+  SDK import fails.
+- **`SdkAuthError`** — hard failure, no fallback: any error from
+  `Client.authenticate()` or `client.secrets.resolve()` while the SDK path
+  is configured.
 
-## Options Considered
+The rule is binary: once the SDK path is configured, any failure — including
+transient ones such as rate limits — is a hard failure. No principal switching.
 
-1. **Strict, no automatic fallback.** Only explicit `prefer_cli=True` uses the
-   CLI. Any failure of the configured principal is a hard error. Simplest
-   security model, but removes the workstation convenience the module
-   advertises (NFR-3 becomes explicit-choice only).
+### Resolution flow (default, `prefer_cli=False`)
 
-2. **Conditional fallback.** Fall back from SDK to CLI only when the SDK path
-   is unavailable by configuration: SDK not installed,
-   `OP_SERVICE_ACCOUNT_TOKEN` not set, or `op` absent. Hard-fail when the SDK
-   is configured and present but authentication or authorization fails. Keeps
-   the workstation workflow and prevents silent principal switching.
+```
+SDK configured (OP_SERVICE_ACCOUNT_TOKEN set)?
+├── Yes → Try SDK
+│   ├── Success → done (source="sdk")
+│   └── Failure (SdkAuthError) → HARD FAIL, no CLI fallback
+└── No (SdkNotConfiguredError) → CLI fallback allowed if `op` available
+```
 
-3. **Keep current behaviour and document the caveat.** No code change, but the
-   risk remains for any automation that runs on a machine with both a token
-   and a signed-in CLI.
+### Resolution flow (CLI-first, `prefer_cli=True`)
 
-## Proposed Decision
+Used by provider adapters (e.g., `octodns_metaname.op_opsdevnz_hooks:resolve`)
+on workstations where the signed-in `op` session is the intended principal:
 
-Adopt option 2. Introduce a distinction between configuration absence and
-runtime auth failure:
+```
+Try CLI first
+├── Success → done (source="cli")
+└── Failure → Try SDK
+    ├── Success → done (source="sdk")
+    └── Failure → re-raise CLI error
+```
 
-- Two `SecretError` subclasses: `SdkNotConfiguredError` and `SdkAuthError`.
-  The resolver decides which to raise from its own pre-checks and call
-  context, never by inspecting SDK exception types.
-- Classification is by configuration state, not exception type. The SDK
-  exposes no typed exceptions for "not configured" versus "auth failed": a
-  rejected token raises a bare `Exception("invalid user input: ...")`
-  (verified empirically against onepassword-sdk 0.4.0), and the only typed
-  exceptions in the SDK are `DesktopSessionExpiredException` (desktop-app
-  only, not the service-account path) and `RateLimitExceededException`.
-  So the resolver's pre-checks decide:
-  - `SdkNotConfiguredError` — fallback to CLI allowed: token absent, or the
-    SDK import fails.
-  - `SdkAuthError` — hard failure, no fallback: any error from
-    `Client.authenticate()` or `client.secrets.resolve()` while the SDK path
-    is configured.
-- The rule is binary: once the SDK path is configured, any failure — including
-  transient ones such as rate limits — is a hard failure. No principal
-  switching.
-- Revisit `octodns_hooks.py`: `prefer_cli` should not be forced unconditionally.
-  In CI, the CLI and the SDK resolve as the same principal, so the hook should
-  let the SDK path run once it works ([ADR-001](service-account-resolution.md)).
-  CLI-first stays the right default for workstations, where the signed-in `op`
-  session is the intended principal.
-- Keep `SecretResolution.source` so automation can log and assert which
-  principal produced the value.
+### CI behaviour
 
-CI nuance: with `OP_SERVICE_ACCOUNT_TOKEN` set, the CLI authenticates as the
-same service-account principal the SDK would use, so CLI-first resolution in
-the pipeline is not a credential downgrade. The identity-switch risk from
-issue \#8 is a workstation concern, where a human `op` session can sit next
-to a service-account token. The conditional fallback above targets that
-case; in CI the two paths are interchangeable.
+With `OP_SERVICE_ACCOUNT_TOKEN` set, the CLI authenticates as the same
+service-account principal the SDK would use. Both paths are interchangeable
+in CI — the identity-switch risk from issue #8 is a workstation concern, where
+a human `op` session can sit next to a service-account token.
 
-## Implementation Order
+## Why two error classes?
 
-ADR-001 must land before ADR-003. Until the SDK path works,
-`_resolve_via_sdk()` raises `SecretError("onepassword-sdk not installed")`
-even when the SDK is installed. If ADR-003 shipped first, that error would
-need a transitional classification: map it to `SdkNotConfiguredError`
-(fallback allowed), not `SdkAuthError` (hard failure), or every workstation's
-silent-but-working CLI fallback would become a hard failure, because the
-current failure mode would be bucketed as "configured but broken" rather than
-"not configured". Sequencing ADR-001 first avoids the transitional rule
-entirely.
+The SDK exposes no typed exceptions for "not configured" versus "auth failed":
+a rejected token raises a bare `Exception("invalid user input: ...")`, and the
+only typed exceptions are `DesktopSessionExpiredException` (desktop-app only)
+and `RateLimitExceededException`. So the resolver's pre-checks decide:
 
-## Resolved Questions (2026-08-04)
+- Token absent? → `SdkNotConfiguredError`
+- SDK import fails? → `SdkNotConfiguredError`
+- Any error from `Client.authenticate()` or `client.secrets.resolve()`? →
+  `SdkAuthError`
+
+## Implementation Order (historical)
+
+ADR-001 (SDK integration) landed before ADR-003 (this policy). Until the SDK
+path worked, `_resolve_via_sdk()` always raised `SecretError("onepassword-sdk
+not installed")` — which would have been misclassified as `SdkAuthError` (hard
+failure) if ADR-003 shipped first. Sequencing ADR-001 first avoided the
+transitional rule entirely.
+
+## Resolved Questions
 
 - **Pinning a required source.** Deferred. Callers can already assert
-  `resolution.source == "sdk"` (FR-4) after the fact, and this ADR's binary
-  rule removes the dangerous silent fallback. No consumer has asked for
-  first-class pinning; revisit if one does.
+  `resolution.source == "sdk"` after the fact, and this ADR's binary rule
+  removes the dangerous silent fallback.
 - **Which SDK exceptions map to "not configured" versus "auth failed".**
-  None do: the SDK raises a bare `Exception` for token rejection and has no
-  typed "not configured" exception (see Proposed Decision). Classification is
-  by configuration state, decided by the resolver's pre-checks.
-- **Whether NFR-3 needs rewording.** Yes — and FR-2 too. Both are reworded to
-  conditional fallback in this change, so the specs and this ADR describe the
-  same policy.
+  None do: the SDK raises a bare `Exception` for token rejection. Classification
+  is by configuration state, decided by the resolver's pre-checks.
 
 ## More Information
 
 - Issue [#8](https://github.com/startmeup-nz/op-opsdevnz/issues/8): Repair SDK
   integration and consolidate the public package namespace.
-- [NFRs](../specs/NFR.md), NFR-3 graceful fallback.
+- Issue [#9](https://github.com/startmeup-nz/op-opsdevnz/issues/9): Fix
+  service-account resolution to use the real onepassword-sdk Client API.
