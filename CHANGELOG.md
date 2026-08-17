@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-08-17
+
+### Breaking
+
+- **Removed `octodns_hooks.py`:** the provider-specific OctoDNS adapter has
+  been moved to `octodns_metaname.op_opsdevnz_hooks:resolve` in the
+  `octodns-metaname` module. Consumers should update their
+  `OCTODNS_METANAME_SECRET_RESOLVER` to point to the new location.
+- **Removed `test_octodns_hooks.py`:** tests for the deprecated module removed.
+
+### Changed
+
+- Removed `octodns` from package keywords — `op-opsdevnz` is a generic 1Password
+  helper, not OctoDNS-specific.
+- Added GitHub Pages documentation workflow.
+
 ## [0.2.1] - 2026-08-16
 
 ### Documentation
